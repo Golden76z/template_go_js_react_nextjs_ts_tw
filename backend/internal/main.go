@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
+	"handlers"
 	"log"
 	"net/http"
 	"time"
-	"utilss"
+	"utils"
 )
 
 func main() {
@@ -17,8 +18,6 @@ func main() {
 	// Loading .env variables (sensible informations)
 	utils.LoadEnv(".env")
 
-	// Database / Websocket hub setup
-
 	// Router configuration
 	mux := setupMux()
 	// Need rate limiter implementation
@@ -26,16 +25,15 @@ func main() {
 
 	// Configuration HTTPS
 	// lib.SetupHTTPS(server)
-
 	log.Printf("Server starting on https://%s...\n", server.Addr)
 
-	// Démarrage du serveur HTTPS
-	if err := server.ListenAndServeTLS("server.crt", "server.key"); err != nil { // Utilisation de ListenAndServeTLS pour HTTPS
+	// HTTPS start
+	if err := server.ListenAndServeTLS("server.crt", "server.key"); err != nil {
 		log.Fatalf("Error starting server: %v", err)
 	}
 }
 
-// Configuration du routeur
+// Router configuration
 func setupMux() *http.ServeMux {
 	// New ServeMux setup
 	mux := http.NewServeMux()
@@ -51,11 +49,10 @@ func setupMux() *http.ServeMux {
 	// mux.HandleFunc("/about", handlers.AboutHandler)
 	//mux.HandleFunc("/error", handlers.ForceDirectError) // !for testing purpose only (not for production)
 	//mux.HandleFunc("/500", handlers.Force500Handler)    // !for testing purpose only (not for production)
-
 	return mux
 }
 
-// Configuration du serveur
+// Server configuration
 func setupServer(handler http.Handler) *http.Server {
 	return &http.Server{
 		Addr:              ":8080",
