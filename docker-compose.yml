@@ -1,13 +1,72 @@
 version: "3.8"
+
 services:
   backend:
-    build: ./backend
-    ports:
-      - "8080:8080"
+    build: ./server
+    expose:
+      - "8080"
+    environment:
+      - PORT=8080
+      - DB_PASSWORD_FILE=/run/secrets/db_password
+    secrets:
+      - db_password
+    restart: unless-stopped
+    networks:
+      - internal
 
-  frontend:
-    build: ./frontend
+  client:
+    build: ./client
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8080
+      - NEXT_PUBLIC_API_URL=https://api.template.com
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+
+  # proxy:
+  #   build: ./proxy
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     # SSL certificates
+  #     - ./proxy/ssl:/etc/nginx/ssl  
+  #     # Your custom configs
+  #     - ./proxy/sites-enabled:/etc/nginx/sites-enabled  
+  #   depends_on:
+  #     - backend
+  #     - frontend
+  #   networks:
+  #     - internal
+  #     - public
+
+  # cloudflare:
+  #   image: cloudflare/cloudflared:latest
+  #   environment:
+  #     - TUNNEL_TOKEN=${CLOUDFLARE_TOKEN}
+  #   command: tunnel --no-autoupdate run --token $${TUNNEL_TOKEN}
+  #   depends_on:
+  #     - proxy
+  #   networks:
+  #     - public
+
+networks:
+  internal:
+    # Blocks external access
+    internal: true  
+  public:
+# For Proxy
+# secrets:
+#   db_password:
+#     file: ./proxy/secrets/db_password.txt
+#   cloudflare_token:
+#     file: ./proxy/secrets/cloudflare_token.txt
